@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<script type='text/javascript' src='vendor/knockout.js'></script>
+<script type='text/javascript' src='util.js'></script>
+<script src="vendor/sortable.js"></script>
+<style>
+  *{
+    font-family: sans-serif;
+  }
+  .ml-2 { margin-left: 10px }
+  .info span {text-decoration: underline;}
+</style>
+
+<body style="width: 900px; margin: 0 auto;">
+  <a href="index.html">to main</a>
+
+  <button data-bind="click: toggle, text: btnName() + ' info' "></button>
+
+  <div data-bind="if: isDisplay" class="info">
+    First name: <span data-bind="text: firstName"></span>;
+    Last name: <span data-bind="text: lastName"></span>
+    <br>
+    Full name: <span data-bind="text: fullName"></span>
+  </div>
+  <pre data-bind="text: JSON.stringify({firstName: firstName(), lastName: lastName()})"></pre>
+  <ui-input params="label: 'First name', value: firstName"></ui-input>
+  <ui-input params="label: 'Last name', value: lastName"></ui-input>
+  <button data-bind="click: capitalizeLastName">Capitalize last name</button>
+  <button data-bind="click: submit">Submit</button>
+  <br><br>
+
+  <!-- <div id="simpleList0">
+    <div id="i1">1. This is Sortable</div>
+    <div id="i2">2. It works with Bootstrap</div>
+    <div id="i3">3. Out of the box</div>
+    <div id="i4">4. It has support for touch devices</div>
+    <div id="i5">5. Just drag some elements around</div>
+  </div> -->
+
+  <div id="group1">
+    <details class="nested1">
+      <summary>1.test1</summary>
+      <div class="group2">
+        <div class="ml-2 nested2">1-1.test1-1</div>
+        <div class="ml-2 nested2">1-2.test1-2</div>
+      </div>
+    </details>
+    <details class="nested1">
+      <summary>2.test2</summary>
+      <div class="group2">
+        <div class="ml-2 nested2">2-1.test2-1</div>
+        <div class="ml-2 nested2">2-2.test2-2</div>
+      </div>
+    </details>
+  </div>
+
+  <details style="margin-top: 30px">
+    <summary>Model</summary>
+    <pre data-bind="text: JSON.stringify(arr(), null, 2)"></pre>
+  </details>
+
+  <!-- варианты body в div-foreach: -->
+  <!-- <test-item params="text: $data.id"></test-item> --> <!-- это компонент, но не работает анимация sortable -->
+  <!-- <div data-bind="text: $data.id"></div> --> <!-- это не компонент, но работает анимация sortable -->
+  <!-- это компонент, и с ko component работает анимация sortable -->
+  <div data-bind="foreach: arr" id="simpleList" style="margin-top: 30px">
+    <!-- ko component: { 
+        name: "test-item",
+        params: { text: $data.id }
+    } -->
+    <!-- /ko -->
+  </div>
+
+  <script type="text/javascript">
+
+    function AppViewModel() {
+      const $ = this
+
+      $.firstName = ko.observable('Bert')
+      $.lastName = ko.observable('Bertington')
+      $.fullName = ko.computed(() => $.firstName() + ' ' + $.lastName())
+      $.capitalizeLastName = () => {
+        const newVal = $.lastName().toUpperCase()
+        $.lastName(newVal)
+      }
+      $.submit = () => alert(JSON.stringify({
+        firstName: $.firstName(),
+        lastName: $.lastName(),
+      }))
+
+      $.isDisplay = ko.observable(true)
+      $.btnName = ko.computed(() => $.isDisplay() ? 'Hide' : 'Show')
+      $.toggle = () => $toggle($.isDisplay)
+
+      $.arr = ko.observableArray([{id: 11},{id: 22},{id: 33},{id: 44}])
+    }
+
+    ko.components.register('ui-input', UiInput)
+
+    ko.components.register('test-item', {
+      viewModel: function(props) {
+        this.text = props.text ?? Math.random()
+      },
+      template: /*html*/`
+        <div data-bind="text: text"></div>
+      `,
+    })
+
+    const vm = new AppViewModel()
+    ko.applyBindings(vm)
+
+    const list = document.querySelector('#simpleList')
+    Sortable.create(list, {
+      animation: 200,
+      onEnd: ({oldIndex, newIndex}) => vm.arr( move(vm.arr(), oldIndex, newIndex) )//console.log({o: e.oldIndex, n: e.newIndex})
+    })
+
+    const roots = document.querySelectorAll('#group1')
+    for (let i = 0; i < roots.length; i++)
+      Sortable.create(roots[i], {group: 'nested1', animation: 200})
+    
+    const leafs = document.querySelectorAll('.group2')
+    for (let i = 0; i < leafs.length; i++)
+      Sortable.create(leafs[i], {group: 'nested2', animation: 200})
+    
+  </script>
+
+</body>
+
+</html>

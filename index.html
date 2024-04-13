@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<script type='text/javascript' src='vendor/knockout.js'></script>
+<script type='text/javascript' src='util.js'></script>
+<link rel="stylesheet" href="css/font-awesome.min.css">
+<script src="vendor/sortable.js"></script>
+<style>
+  *{
+    font-family: sans-serif;
+  }
+  .category__body {
+    border: 2px solid gainsboro;
+    height: 40px;
+    margin: 1px 0 1px 1px;
+    display: flex;
+    align-items: center;
+  }
+  .category__title {
+    margin-left: 10px;
+    font-weight: bolder;
+    width: 100%;
+  }
+
+  .element {
+    border: 2px solid gainsboro;
+    height: 30px;
+    margin-left: 40px;
+    display: flex;
+    align-items: center;
+  }
+  .element__title {
+    margin-left: 10px;
+    width: 100%;
+  }
+
+  .icon {
+    margin: 0 7px;
+    color: skyblue;
+    cursor: pointer;
+  }
+  .move-icon {
+    color: gainsboro;
+  }
+  .sortable-chosen .move-icon {
+    color: skyblue;
+  }
+  .circle {
+    border: 2px solid gainsboro;
+    border-radius: 50%;
+    padding: 3px;
+  }
+</style>
+
+<body style="width: 600px; margin: 0 auto;">
+  <a href="test.html">to test</a>
+
+  <details>
+    <summary>Model</summary>
+    <pre data-bind="text: JSON.stringify(categories(), null, 2)"></pre>
+  </details>
+
+  <!-- todo попробуй пофиксить рендеринг компонента как комментарий (но пока только так работает анимация - т.к. нет контейнера)  -->
+  <div data-bind="foreach: categories" id="categories">
+    <!-- ko component: { 
+        name: "category-item",
+        params: { name: name, elements: elements }
+    } -->
+    <!-- /ko -->
+  </div>
+
+  <script type="text/javascript">
+    function AppViewModel() {
+      const $ = this
+
+      $.categories = ko.observableArray([
+        {
+          id: 1, name: 'Обязательные для всех', hide: false, elements: [
+            { elName: 'Паспорт' }, { elName: 'ИНН' }
+          ]
+        },
+        {
+          id: 2, name: 'Обязательные для трудоустройства', hide: false, elements: [
+            { elName: 'Трудовая книжка' }, { elName: 'Документ' }
+          ]
+        },
+        {
+          id: 3, name: 'Специальные', hide: false, elements: [
+            { elName: 'Что-то' }, { elName: 'Бумага' }
+          ]
+        },
+      ])
+    }
+
+    ko.components.register('category-item', CategoryItem);
+
+    ko.applyBindings(new AppViewModel())
+
+    createCategoriesSortable()
+
+  </script>
+
+</body>
+
+</html>
