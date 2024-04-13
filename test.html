@@ -35,46 +35,37 @@
   <button data-bind="click: submit">Submit</button>
   <br><br>
 
-  <!-- <div id="simpleList0">
-    <div id="i1">1. This is Sortable</div>
-    <div id="i2">2. It works with Bootstrap</div>
-    <div id="i3">3. Out of the box</div>
-    <div id="i4">4. It has support for touch devices</div>
-    <div id="i5">5. Just drag some elements around</div>
-  </div> -->
-
-  <div id="group1">
-    <details class="nested1">
-      <summary>1.test1</summary>
-      <div class="group2">
-        <div class="ml-2 nested2">1-1.test1-1</div>
-        <div class="ml-2 nested2">1-2.test1-2</div>
-      </div>
-    </details>
-    <details class="nested1">
-      <summary>2.test2</summary>
-      <div class="group2">
-        <div class="ml-2 nested2">2-1.test2-1</div>
-        <div class="ml-2 nested2">2-2.test2-2</div>
-      </div>
-    </details>
-  </div>
-
-  <details style="margin-top: 30px">
-    <summary>Model</summary>
-    <pre data-bind="text: JSON.stringify(arr(), null, 2)"></pre>
+  <!-- arr -->
+  <details style="margin: 20px 0">
+    <summary>arr model</summary>
+    <pre data-bind="text: JSON.stringify(arr())"></pre>
   </details>
 
   <!-- варианты body в div-foreach: -->
   <!-- <test-item params="text: $data.id"></test-item> --> <!-- это компонент, но не работает анимация sortable -->
   <!-- <div data-bind="text: $data.id"></div> --> <!-- это не компонент, но работает анимация sortable -->
   <!-- это компонент, и с ko component работает анимация sortable -->
-  <div data-bind="foreach: arr" id="simpleList" style="margin-top: 30px">
+  <div data-bind="foreach: arr" id="simpleList">
     <!-- ko component: { 
         name: "test-item",
         params: { text: $data.id }
     } -->
     <!-- /ko -->
+  </div>
+
+  <!-- tree -->
+  <details style="margin: 20px 0">
+    <summary>tree model</summary>
+    <pre data-bind="text: JSON.stringify(tree())"></pre>
+  </details>
+
+  <div data-bind="foreach: tree" id="group1">
+    <details class="nested1">
+      <summary data-bind="text: name"></summary>
+      <div data-bind="foreach: children, attr: {id: name}" class="group2">
+        <div data-bind="text: name" class="ml-2 nested2"></div>
+      </div>
+    </details>
   </div>
 
   <script type="text/javascript">
@@ -99,6 +90,12 @@
       $.toggle = () => $toggle($.isDisplay)
 
       $.arr = ko.observableArray([{id: 11},{id: 22},{id: 33},{id: 44}])
+
+      $.tree = ko.observableArray([
+        {name: 'parent1', children: [{name: 'child1-1'}, {name: 'child1-2'}]},
+        {name: 'parent2', children: [{name: 'child2-1'}, {name: 'child2-2'}]},
+        {name: 'parent3', children: [{name: 'child3-1'}, {name: 'child3-2'}]},
+      ])
     }
 
     ko.components.register('ui-input', UiInput)
@@ -115,19 +112,37 @@
     const vm = new AppViewModel()
     ko.applyBindings(vm)
 
-    const list = document.querySelector('#simpleList')
-    Sortable.create(list, {
+    const arr = document.querySelector('#simpleList')
+    Sortable.create(arr, {
       animation: 200,
-      onEnd: ({oldIndex, newIndex}) => vm.arr( move(vm.arr(), oldIndex, newIndex) )//console.log({o: e.oldIndex, n: e.newIndex})
+      onEnd: ({oldIndex, newIndex}) => vm.arr(move(vm.arr(), oldIndex, newIndex))
     })
 
     const roots = document.querySelectorAll('#group1')
     for (let i = 0; i < roots.length; i++)
-      Sortable.create(roots[i], {group: 'nested1', animation: 200})
+      Sortable.create(roots[i], {group: 'nested1', animation: 200,
+        onEnd: ({oldIndex, newIndex}) => vm.tree(move(vm.tree(), oldIndex, newIndex))})
     
     const leafs = document.querySelectorAll('.group2')
     for (let i = 0; i < leafs.length; i++)
-      Sortable.create(leafs[i], {group: 'nested2', animation: 200})
+      Sortable.create(leafs[i], {group: 'nested2', animation: 200,
+        onEnd: ({oldIndex, newIndex, from, to}) => {
+          const tree = vm.tree()
+          if (from.id === to.id) {//moving in parent
+            tree.forEach(el => {
+              if (el.name===to.id) el.children = move(el.children, oldIndex, newIndex)
+            })
+          } else {//moving between parents
+            let item
+            tree.forEach(el => {
+              if (el.name===from.id) item = el.children.splice(oldIndex,1)[0]
+            })
+            tree.forEach(el => {
+              if (el.name===to.id) el.children.splice(newIndex,0,item)
+            })
+          }
+          vm.tree(tree)
+        }})
     
   </script>
 

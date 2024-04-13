@@ -69,7 +69,7 @@
   <div data-bind="foreach: categories" id="categories">
     <!-- ko component: { 
         name: "category-item",
-        params: { name: name, elements: elements }
+        params: { categories: $parent.categories, code, name, elements }
     } -->
     <!-- /ko -->
   </div>
@@ -80,17 +80,17 @@
 
       $.categories = ko.observableArray([
         {
-          id: 1, name: 'Обязательные для всех', hide: false, elements: [
+          code: 'c1', name: 'Обязательные для всех', elements: [
             { elName: 'Паспорт' }, { elName: 'ИНН' }
           ]
         },
         {
-          id: 2, name: 'Обязательные для трудоустройства', hide: false, elements: [
+          code: 'c2', name: 'Обязательные для трудоустройства', elements: [
             { elName: 'Трудовая книжка' }, { elName: 'Документ' }
           ]
         },
         {
-          id: 3, name: 'Специальные', hide: false, elements: [
+          code: 'c3', name: 'Специальные', elements: [
             { elName: 'Что-то' }, { elName: 'Бумага' }
           ]
         },
@@ -99,9 +99,10 @@
 
     ko.components.register('category-item', CategoryItem);
 
-    ko.applyBindings(new AppViewModel())
+    const vm = new AppViewModel()
+    ko.applyBindings(vm)
 
-    createCategoriesSortable()
+    createCategoriesSortable(vm.categories)
 
   </script>
 

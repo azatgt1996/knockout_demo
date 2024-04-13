@@ -32,27 +32,46 @@ const props = {
   swapThreshold: 0.65,
 }
 
-const createCategoriesSortable = () => {
+const createCategoriesSortable = (categories) => {
   const roots = document.querySelectorAll('#categories')
   for (let i = 0; i < roots.length; i++)
-    Sortable.create(roots[i], {group: 'category', ...props, onEnd: e => console.log({o: e.oldIndex, n: e.newIndex}) })
+    Sortable.create(roots[i], {group: 'category', ...props,
+      onEnd: ({oldIndex, newIndex}) => categories(move(categories(), oldIndex, newIndex))})
 }
 
-const createElementsSortable = () => {
+const createElementsSortable = (categories) => {
   const leafs = document.querySelectorAll('.elements')
   for (let i = 0; i < leafs.length; i++)
-    Sortable.create(leafs[i], {group: 'element', ...props, onEnd: e => console.log({o: e.oldIndex, n: e.newIndex, t: e.to, f: e.from})})
+    Sortable.create(leafs[i], {group: 'element', ...props,
+    onEnd: ({oldIndex, newIndex, from, to}) => {
+      const _categories = categories()
+      if (from.id === to.id) {//moving in category
+        _categories.forEach(el => {
+          if (el.code===to.id) el.elements = move(el.elements, oldIndex, newIndex)
+        })
+      } else {//moving between categories
+        let item
+        _categories.forEach(el => {
+          if (el.code===from.id) item = el.elements.splice(oldIndex,1)[0]
+        })
+        _categories.forEach(el => {
+          if (el.code===to.id) el.elements.splice(newIndex,0,item)
+        })
+      }
+      categories(_categories)
+    }})
 }
 
 const CategoryItem = {
   viewModel: function(params) {
+    this.code = params.code
     this.name = params.name
     this.elements = params.elements
 
     this.isHide = ko.observable(true)
     this.toggle = function() {
       $toggle(this.isHide)
-      if (!this.isHide()) createElementsSortable()
+      if (!this.isHide()) createElementsSortable(params.categories)
     }.bind(this)
   },
   template: /*html*/`
@@ -60,19 +79,18 @@ const CategoryItem = {
       <div class="category__body">
         <i class="fa icon circle"
           data-bind="css: {'fa-chevron-down': isHide(), 'fa-chevron-up': !isHide()},
-                    click: toggle, attr: {title: isHide() ? 'Показать' : 'Скрыть'}"></i>
+                     click: toggle, attr: {title: isHide() ? 'Показать' : 'Скрыть'}"></i>
         <span data-bind="text: name" class="category__title"></span>
-        <i class="fa fa-arrows-v icon move-icon" data-bind="attr: {title: 'Переместить'}"></i>
+        <i class="fa fa-arrows-v icon move-icon" title="Переместить"></i>
       </div>
-      <div data-bind="visible: !isHide()">
-        <div data-bind="foreach: elements" class="elements" style="margin-top: -3px">
+      <div data-bind="hidden: isHide">
+        <div data-bind="foreach: elements, attr: {id: code}" class="elements" style="margin-top: -3px">
           <div class="element">
             <span data-bind="text: elName" class="element__title"></span>
-            <i class="fa fa-arrows-v icon move-icon" data-bind="attr: {title: 'Переместить'}"></i>
+            <i class="fa fa-arrows-v icon move-icon" title="Переместить"></i>
           </div>
         </div>
       </div>
     </div>
-  `,
-  //synchronous: true
+  `
 }
